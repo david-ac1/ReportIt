@@ -1,15 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:reportit/app.dart';
+import 'package:reportit/features/auth/presentation/auth_page.dart';
 
 void main() {
-  testWidgets('renders the ReportIt foundation screen', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: ReportItApp()),
-    );
-
-    expect(find.text('ReportIt'), findsOneWidget);
-    expect(find.text('Campus issues, heard and resolved.'), findsOneWidget);
+  test('accepts only ALU student email addresses', () {
+    expect(isAllowedAluEmail('student@alustudent.com'), isTrue);
+    expect(isAllowedAluEmail('STUDENT@ALUSTUDENT.COM'), isTrue);
+    expect(isAllowedAluEmail('student@gmail.com'), isFalse);
+    expect(isAllowedAluEmail('student@alustudent.com.example'), isFalse);
   });
 }

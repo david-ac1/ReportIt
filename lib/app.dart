@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'features/home/presentation/home_page.dart';
+import 'features/auth/presentation/auth_gate.dart';
 import 'theme/app_theme.dart';
 
 class ReportItApp extends StatelessWidget {
@@ -12,7 +12,7 @@ class ReportItApp extends StatelessWidget {
       title: 'ReportIt',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const HomePage(),
+      home: const AuthGate(),
     );
   }
 }
