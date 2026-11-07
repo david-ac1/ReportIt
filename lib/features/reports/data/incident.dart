@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 enum IncidentStatus { submitted, inProgress, resolved }
 
@@ -10,6 +11,17 @@ String statusLabel(IncidentStatus status) {
       return 'In progress';
     case IncidentStatus.resolved:
       return 'Resolved';
+  }
+}
+
+Color statusColor(IncidentStatus status) {
+  switch (status) {
+    case IncidentStatus.submitted:
+      return const Color(0xFF1557A6);
+    case IncidentStatus.inProgress:
+      return const Color(0xFF9A6700);
+    case IncidentStatus.resolved:
+      return const Color(0xFF2E7D32);
   }
 }
 

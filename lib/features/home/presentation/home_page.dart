@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_providers.dart';
@@ -39,7 +40,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         error: (error, stackTrace) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Unable to load your reports: $error'),
+            child: _ReportErrorMessage(error: error),
           ),
         ),
         data: (reports) {
@@ -80,9 +81,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Icon(Icons.report_problem_outlined),
                   ),
                   title: Text(report.title),
-                  subtitle: Text(
-                    '${report.category} • ${report.location}\n'
-                    '${statusLabel(report.status)}',
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${report.category} • ${report.location}'),
+                      const SizedBox(height: 4),
+                      _StatusChip(status: report.status),
+                    ],
                   ),
                   isThreeLine: true,
                   onTap: () => Navigator.of(context).push(
@@ -200,6 +205,42 @@ class _FilterBar extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.status});
+
+  final IncidentStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(statusLabel(status)),
+      labelStyle: TextStyle(
+        color: statusColor(status),
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: statusColor(status).withValues(alpha: 0.12),
+      side: BorderSide.none,
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _ReportErrorMessage extends StatelessWidget {
+  const _ReportErrorMessage({required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) {
+    final message =
+        error is FirebaseException &&
+            (error as FirebaseException).code == 'permission-denied'
+        ? 'You do not have permission to view these reports.'
+        : 'Unable to load your reports. Check your connection and try again.';
+    return Text(message, textAlign: TextAlign.center);
   }
 }
 

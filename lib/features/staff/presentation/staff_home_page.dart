@@ -27,7 +27,10 @@ class StaffHomePage extends ConsumerWidget {
         error: (error, stackTrace) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Unable to load staff reports: $error'),
+            child: const Text(
+              'Unable to load staff reports. Check your connection and permissions.',
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
         data: (reports) => reports.isEmpty
@@ -63,6 +66,17 @@ class _StaffIncidentCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(incident.description),
             const SizedBox(height: 12),
+            Chip(
+              label: Text(statusLabel(incident.status)),
+              labelStyle: TextStyle(
+                color: statusColor(incident.status),
+                fontWeight: FontWeight.w600,
+              ),
+              backgroundColor: statusColor(
+                incident.status,
+              ).withValues(alpha: 0.12),
+              side: BorderSide.none,
+            ),
             DropdownButtonFormField<IncidentStatus>(
               initialValue: incident.status,
               decoration: const InputDecoration(labelText: 'Status'),
