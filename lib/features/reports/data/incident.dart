@@ -2,6 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum IncidentStatus { submitted, inProgress, resolved }
 
+String statusLabel(IncidentStatus status) {
+  switch (status) {
+    case IncidentStatus.submitted:
+      return 'Submitted';
+    case IncidentStatus.inProgress:
+      return 'In progress';
+    case IncidentStatus.resolved:
+      return 'Resolved';
+  }
+}
+
 class Incident {
   const Incident({
     required this.id,
