@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/auth_providers.dart';
 
 bool isAllowedAluEmail(String email) {
-  return RegExp(r'^[^@\s]+@alustudent\.com$', caseSensitive: false)
-      .hasMatch(email.trim());
+  return RegExp(
+    r'^[^@\s]+@alustudent\.com$',
+    caseSensitive: false,
+  ).hasMatch(email.trim());
 }
 
 class AuthPage extends ConsumerStatefulWidget {
@@ -50,9 +52,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
       }
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_messageFor(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_messageFor(error))));
     } finally {
       if (mounted) setState(() => _isBusy = false);
     }
@@ -70,6 +72,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
         return 'Use a password with at least six characters.';
       case 'network-request-failed':
         return 'Network unavailable. Check your connection and try again.';
+      case 'internal-error':
+      case 'configuration-not-found':
+        return 'Firebase Authentication is not configured. Enable Email/Password '
+            'sign-in in the Firebase Console.';
       default:
         return error.message ?? 'Authentication failed. Please try again.';
     }
@@ -168,9 +174,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   TextButton(
                     onPressed: _isBusy
                         ? null
-                        : () => setState(
-                              () => _isRegistering = !_isRegistering,
-                            ),
+                        : () =>
+                              setState(() => _isRegistering = !_isRegistering),
                     child: Text(
                       _isRegistering
                           ? 'Already have an account? Sign in'
