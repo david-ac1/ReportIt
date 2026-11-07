@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/home/presentation/home_page.dart';
 import '../application/auth_providers.dart';
+import '../application/role_providers.dart';
 import 'auth_page.dart';
 import 'verify_email_page.dart';
+import '../../staff/presentation/staff_home_page.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -29,8 +31,24 @@ class AuthGate extends ConsumerWidget {
         if (!user.emailVerified) {
           return const VerifyEmailPage();
         }
-        return const HomePage();
+        return const _RoleGate();
       },
+    );
+  }
+}
+
+class _RoleGate extends ConsumerWidget {
+  const _RoleGate();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(isStaffProvider);
+    return role.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => const HomePage(),
+      data: (isStaff) => isStaff ? const StaffHomePage() : const HomePage(),
     );
   }
 }

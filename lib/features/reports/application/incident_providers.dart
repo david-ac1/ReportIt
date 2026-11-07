@@ -14,3 +14,7 @@ final incidentsProvider = StreamProvider<List<Incident>>((ref) {
   if (user == null) return const Stream.empty();
   return ref.watch(incidentRepositoryProvider).watchIncidents(user.uid);
 });
+
+final allIncidentsProvider = StreamProvider<List<Incident>>((ref) {
+  return ref.watch(incidentRepositoryProvider).watchAllIncidents();
+});

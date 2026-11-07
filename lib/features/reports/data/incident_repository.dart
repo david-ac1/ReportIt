@@ -8,12 +8,27 @@ class IncidentRepository {
   final FirebaseFirestore _firestore;
 
   Stream<List<Incident>> watchIncidents(String userId) {
-    return _firestore
-        .collection('incidents')
-        .where('reportedBy', isEqualTo: userId)
-        .orderBy('reportedAt', descending: true)
-        .snapshots()
-        .map(
+    return _watchQuery(
+      _firestore
+          .collection('incidents')
+          .where('reportedBy', isEqualTo: userId)
+          .orderBy('reportedAt', descending: true),
+    );
+  }
+
+  Stream<List<Incident>> watchAllIncidents() {
+    return _watchQuery(
+      _firestore.collection('incidents').orderBy(
+            'reportedAt',
+            descending: true,
+          ),
+    );
+  }
+
+  Stream<List<Incident>> _watchQuery(
+    Query<Map<String, dynamic>> query,
+  ) {
+    return query.snapshots().map(
           (snapshot) => snapshot.docs
               .map(Incident.fromDocument)
               .toList(growable: false),
@@ -38,6 +53,16 @@ class IncidentRepository {
       'reportedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'status': IncidentStatus.submitted.name,
+    });
+  }
+
+  Future<void> updateStatus({
+    required String incidentId,
+    required IncidentStatus status,
+  }) {
+    return _firestore.collection('incidents').doc(incidentId).update({
+      'status': status.name,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 }

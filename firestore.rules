@@ -7,9 +7,20 @@ service cloud.firestore {
         && request.resource.data.reportedBy == request.auth.uid;
 
       allow read: if request.auth != null
-        && resource.data.reportedBy == request.auth.uid;
+        && (resource.data.reportedBy == request.auth.uid
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff');
 
-      allow update, delete: if false;
+      allow update: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff'
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'updatedAt']);
+
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
     }
   }
 }
