@@ -13,6 +13,7 @@ safety concerns. Authorized staff can review reports and update their status.
 - Student report history with search and filters
 - Report detail pages
 - Staff dashboard for reviewing all reports
+- Staff can switch to the student report view to submit and track their own reports
 - Staff-only status updates:
   - Submitted
   - In progress
@@ -94,8 +95,8 @@ through the application.
 2. Firebase Authentication sends a verification email.
 3. The app blocks access until the email is verified.
 4. The app checks `users/{uid}.role`.
-5. Users with `role: staff` see the staff dashboard; other verified users see
-   the student dashboard.
+5. Users with `role: staff` see the staff dashboard, with access to a "My
+   reports" student view; other verified users see the student dashboard.
 6. Firestore rules enforce the same access boundaries server-side.
 
 To create a staff account for testing:

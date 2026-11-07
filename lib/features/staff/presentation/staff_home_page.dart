@@ -2,18 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_providers.dart';
+import '../../home/presentation/home_page.dart';
 import '../../reports/application/incident_providers.dart';
 import '../../reports/data/incident.dart';
 
-class StaffHomePage extends ConsumerWidget {
+class StaffHomePage extends ConsumerStatefulWidget {
   const StaffHomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StaffHomePage> createState() => _StaffHomePageState();
+}
+
+class _StaffHomePageState extends ConsumerState<StaffHomePage> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final incidents = ref.watch(allIncidentsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Staff reports'),
+        title: Text(_selectedIndex == 0 ? 'Staff reports' : 'My reports'),
         actions: [
           IconButton(
             tooltip: 'Sign out',
@@ -22,26 +30,50 @@ class StaffHomePage extends ConsumerWidget {
           ),
         ],
       ),
-      body: incidents.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: const Text(
-              'Unable to load staff reports. Check your connection and permissions.',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-        data: (reports) => reports.isEmpty
-            ? const Center(child: Text('No incident reports yet.'))
-            : ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: reports.length,
-                separatorBuilder: (_, index) => const SizedBox(height: 12),
-                itemBuilder: (context, index) =>
-                    _StaffIncidentCard(incident: reports[index]),
+      body: _selectedIndex == 0
+          ? incidents.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stackTrace) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'Unable to load staff reports. Check your connection and permissions.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
+              data: (reports) => reports.isEmpty
+                  ? const Center(child: Text('No incident reports yet.'))
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: reports.length,
+                      separatorBuilder: (_, index) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) =>
+                          _StaffIncidentCard(incident: reports[index]),
+                    ),
+            )
+          : const HomePage(
+              showAppBar: false,
+              showNavigationBar: false,
+              showSignOut: false,
+            ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'All reports',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment),
+            label: 'My reports',
+          ),
+        ],
       ),
     );
   }

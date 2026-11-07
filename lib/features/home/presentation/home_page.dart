@@ -9,7 +9,16 @@ import '../../reports/presentation/create_incident_page.dart';
 import '../../reports/presentation/incident_details_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key});
+  const HomePage({
+    super.key,
+    this.showAppBar = true,
+    this.showNavigationBar = true,
+    this.showSignOut = true,
+  });
+
+  final bool showAppBar;
+  final bool showNavigationBar;
+  final bool showSignOut;
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -26,16 +35,19 @@ class _HomePageState extends ConsumerState<HomePage> {
     final incidents = ref.watch(incidentsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_selectedIndex == 0 ? 'ReportIt' : 'Profile'),
-        actions: [
-          IconButton(
-            tooltip: 'Sign out',
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: Text(_selectedIndex == 0 ? 'ReportIt' : 'Profile'),
+              actions: [
+                if (widget.showSignOut)
+                  IconButton(
+                    tooltip: 'Sign out',
+                    onPressed: () => ref.read(authRepositoryProvider).signOut(),
+                    icon: const Icon(Icons.logout),
+                  ),
+              ],
+            )
+          : null,
       body: _selectedIndex == 0
           ? incidents.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -115,24 +127,26 @@ class _HomePageState extends ConsumerState<HomePage> {
               label: const Text('New report'),
             )
           : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment),
-            label: 'Reports',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: widget.showNavigationBar
+          ? NavigationBar(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: (index) {
+                setState(() => _selectedIndex = index);
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.assignment_outlined),
+                  selectedIcon: Icon(Icons.assignment),
+                  label: 'Reports',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            )
+          : null,
     );
   }
 
