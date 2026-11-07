@@ -22,7 +22,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isRegistering = false;
+  _AuthMode _mode = _AuthMode.studentSignIn;
   bool _isBusy = false;
   bool _obscurePassword = true;
 
@@ -39,7 +39,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     setState(() => _isBusy = true);
     try {
       final repository = ref.read(authRepositoryProvider);
-      if (_isRegistering) {
+      if (_mode == _AuthMode.studentRegistration) {
         await repository.register(
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -83,8 +83,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isRegistering ? 'Create your account' : 'Welcome back';
-    final action = _isRegistering ? 'Create account' : 'Sign in';
+    final isStudentRegistration = _mode == _AuthMode.studentRegistration;
+    final isStaffSignIn = _mode == _AuthMode.staffSignIn;
+    final title = isStudentRegistration
+        ? 'Student sign up'
+        : isStaffSignIn
+        ? 'Staff sign in'
+        : 'Student sign in';
+    final action = isStudentRegistration ? 'Create student account' : 'Sign in';
 
     return Scaffold(
       body: SafeArea(
@@ -113,19 +119,56 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  const SizedBox(height: 20),
+                  SegmentedButton<_AuthMode>(
+                    segments: const [
+                      ButtonSegment(
+                        value: _AuthMode.studentSignIn,
+                        label: Text('Student'),
+                        icon: Icon(Icons.school_outlined),
+                      ),
+                      ButtonSegment(
+                        value: _AuthMode.staffSignIn,
+                        label: Text('Staff'),
+                        icon: Icon(Icons.badge_outlined),
+                      ),
+                    ],
+                    selected: {
+                      isStaffSignIn
+                          ? _AuthMode.staffSignIn
+                          : _AuthMode.studentSignIn,
+                    },
+                    onSelectionChanged: _isBusy
+                        ? null
+                        : (selection) {
+                            setState(() {
+                              _mode = selection.first;
+                            });
+                          },
+                  ),
+                  if (isStaffSignIn)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        'Staff accounts are created by an administrator. '
+                        'Use your authorized staff email.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
                   const SizedBox(height: 28),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'ALU student email',
+                      labelText: 'Email address',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Enter your email address.';
                       }
-                      if (!isAllowedAluEmail(value)) {
+                      if (!isStaffSignIn && !isAllowedAluEmail(value)) {
                         return 'Use your @alustudent.com email.';
                       }
                       return null;
@@ -153,7 +196,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       if (value == null || value.isEmpty) {
                         return 'Enter your password.';
                       }
-                      if (_isRegistering && value.length < 6) {
+                      if (isStudentRegistration && value.length < 6) {
                         return 'Use at least six characters.';
                       }
                       return null;
@@ -171,17 +214,21 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         : Text(action),
                   ),
                   const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _isBusy
-                        ? null
-                        : () =>
-                              setState(() => _isRegistering = !_isRegistering),
-                    child: Text(
-                      _isRegistering
-                          ? 'Already have an account? Sign in'
-                          : 'New to ReportIt? Create an account',
+                  if (!isStaffSignIn)
+                    TextButton(
+                      onPressed: _isBusy
+                          ? null
+                          : () => setState(
+                              () => _mode = isStudentRegistration
+                                  ? _AuthMode.studentSignIn
+                                  : _AuthMode.studentRegistration,
+                            ),
+                      child: Text(
+                        isStudentRegistration
+                            ? 'Already a student? Sign in'
+                            : 'New student? Create an account',
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -191,3 +238,5 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     );
   }
 }
+
+enum _AuthMode { studentSignIn, studentRegistration, staffSignIn }

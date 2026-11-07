@@ -19,6 +19,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   String _searchQuery = '';
   String? _categoryFilter;
   IncidentStatus? _statusFilter;
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ReportIt'),
+        title: Text(_selectedIndex == 0 ? 'ReportIt' : 'Profile'),
         actions: [
           IconButton(
             tooltip: 'Sign out',
@@ -35,77 +36,102 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
-      body: incidents.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: _ReportErrorMessage(error: error),
-          ),
-        ),
-        data: (reports) {
-          if (reports.isEmpty && _searchQuery.isEmpty) {
-            return _EmptyReports(onCreate: () => _openCreatePage(context));
-          }
-          final filteredReports = reports.where(_matchesFilters).toList();
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: filteredReports.length + 1,
-            separatorBuilder: (_, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _FilterBar(
-                  searchQuery: _searchQuery,
-                  category: _categoryFilter,
-                  status: _statusFilter,
-                  onSearchChanged: (value) =>
-                      setState(() => _searchQuery = value),
-                  onCategoryChanged: (value) =>
-                      setState(() => _categoryFilter = value),
-                  onStatusChanged: (value) =>
-                      setState(() => _statusFilter = value),
-                );
-              }
-              if (filteredReports.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('No reports match your filters.'),
-                  ),
-                );
-              }
-              final report = filteredReports[index - 1];
-              return Card(
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.report_problem_outlined),
-                  ),
-                  title: Text(report.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${report.category} • ${report.location}'),
-                      const SizedBox(height: 4),
-                      _StatusChip(status: report.status),
-                    ],
-                  ),
-                  isThreeLine: true,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => IncidentDetailsPage(incident: report),
-                    ),
-                  ),
+      body: _selectedIndex == 0
+          ? incidents.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stackTrace) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: _ReportErrorMessage(error: error),
                 ),
-              );
-            },
-          );
+              ),
+              data: (reports) {
+                if (reports.isEmpty && _searchQuery.isEmpty) {
+                  return _EmptyReports(
+                    onCreate: () => _openCreatePage(context),
+                  );
+                }
+                final filteredReports = reports.where(_matchesFilters).toList();
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredReports.length + 1,
+                  separatorBuilder: (_, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return _FilterBar(
+                        searchQuery: _searchQuery,
+                        category: _categoryFilter,
+                        status: _statusFilter,
+                        onSearchChanged: (value) =>
+                            setState(() => _searchQuery = value),
+                        onCategoryChanged: (value) =>
+                            setState(() => _categoryFilter = value),
+                        onStatusChanged: (value) =>
+                            setState(() => _statusFilter = value),
+                      );
+                    }
+                    if (filteredReports.isEmpty) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text('No reports match your filters.'),
+                        ),
+                      );
+                    }
+                    final report = filteredReports[index - 1];
+                    return Card(
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          child: Icon(Icons.report_problem_outlined),
+                        ),
+                        title: Text(report.title),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${report.category} • ${report.location}'),
+                            const SizedBox(height: 4),
+                            _StatusChip(status: report.status),
+                          ],
+                        ),
+                        isThreeLine: true,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                IncidentDetailsPage(incident: report),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              skipLoadingOnRefresh: true,
+            )
+          : const _ProfileTab(),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton.extended(
+              onPressed: () => _openCreatePage(context),
+              icon: const Icon(Icons.add),
+              label: const Text('New report'),
+            )
+          : null,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
         },
-        skipLoadingOnRefresh: true,
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openCreatePage(context),
-        icon: const Icon(Icons.add),
-        label: const Text('New report'),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment),
+            label: 'Reports',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -241,6 +267,38 @@ class _ReportErrorMessage extends StatelessWidget {
         ? 'You do not have permission to view these reports.'
         : 'Unable to load your reports. Check your connection and try again.';
     return Text(message, textAlign: TextAlign.center);
+  }
+}
+
+class _ProfileTab extends ConsumerWidget {
+  const _ProfileTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authStateChangesProvider).value;
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const CircleAvatar(radius: 36, child: Icon(Icons.person, size: 40)),
+        const SizedBox(height: 16),
+        Text(
+          user?.email ?? 'Signed-in user',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Your account is verified and ready to submit campus reports.',
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        OutlinedButton.icon(
+          onPressed: () => ref.read(authRepositoryProvider).signOut(),
+          icon: const Icon(Icons.logout),
+          label: const Text('Sign out'),
+        ),
+      ],
+    );
   }
 }
 
